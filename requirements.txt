@@ -1,0 +1,31 @@
+# Core
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Data
+yfinance==0.2.36
+pandas==2.1.4
+numpy==1.26.4
+requests==2.31.0
+lxml==5.1.0
+beautifulsoup4=4.12.3
+
+# Analysis & Otimization
+scipy==1.12.0
+PyPortfolioOpt==1.5.5
+cvxpy==1.4.2
+scikit-learn==1.4.0
+
+# Visualization
+plotly==5.18.0
+
+# Frontend
+streamlit==1.31.1
+
+# Reporting
+fpdf2=2.7.8
+kaleido==0.2.1
+
+# Utilities
+python-dotenv==1.0.1
+fredapi==0.5.1
