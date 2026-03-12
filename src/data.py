@@ -141,10 +141,104 @@ def fetch_benchmark_data(start: str, end: str) -> pd.Series:
     pd.Series
         Daily adjust close prices indexed by date.
     """
+    loger.info("Fetching benchmark data for (SPY) from %s to %s.", start, end)
+    raw = yf.download(BENCHMARK_ETF, start=start, end=end, auto_adjust=True, progress=False)
+    return raw["Close"].squeeze().rename("SPY")
+
     
+#------------------------------------------------------------------------------
+# Returns
+#------------------------------------------------------------------------------
+def compute_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute daily log returns: ln(P_t / P_{t-1}).
+    
+    Returns
+    -------
+    pd.DataFrame
+        log returns, same shape as prices minus first row.
+    """
+    return np.log(prices / prices.shift(1)).dropna()
 
 
 
+def compute_simple_returns(prices: pd.DataFrame) -> pd.DataFrame:
+    """
+    compute daily simple returns: (P_t - P_{t-1}) / P_{t-1}.
+    """
+    return prices.pct_change().dropna()
 
 
+#------------------------------------------------------------------------------
+# Risk-Free Rate
+#------------------------------------------------------------------------------
 
+def fetch_risk_free_rate(api_key: Optional[str] = None) -> float:
+    """
+    Fetch the lastest 3-month US Treasury Bill rate from FRED as a proxy 
+    for the risk-free rate.
+
+    Parameters
+    ----------
+    api_key : str, optional
+        FRED API key. If None, falls back to FALLBACK_RF.
+
+    Returns
+    -------
+    float
+        Annualised risk-free rate as a decimal (e.g., 0.045 = 4.5%).
+    """
+    if api_key is None: 
+        logger.warning("No FRED API key provided. Using fallback RF = %.2f%%.", FALLBACK_RF * 100)
+        return FALLBACK_RF
+
+        try:
+            from fredapi import Fred
+            fred = Fred(api_key=api_key)
+            series = fred.get_series(FRED_SERIES_RF)
+            rf = float(series.dropna().ilocp[-1]) / 100.0
+            logger.info("FRED risk-free rate fetched: %.4f", rf)
+            return rf
+        exvept Eception as exc:
+            logger.error("FRED fetch failed: %s. Using fallback RF = %.2f%%.", exc, FALLBACK_RF * 100)
+            return FALLBACK_RF
+
+
+#------------------------------------------------------------------------------
+# Sector Exposure 
+#------------------------------------------------------------------------------
+
+def compute_sector_weights(
+    weights: Dict[str, float],
+    sp500_df: pd.DataFrame,
+) -> pd.Series:
+    """
+    Aggregate portfolio weights by GICS sector.
+
+    Parameters
+    ----------
+    weights : dict
+        {ticker: weight} mapping from optimizer.
+    sp500_df : pd.DataFrame
+        S&P 500 universe DataFrame with 'Symbol' and 'GICS Sector' columns.
+
+    Returns
+    -------
+    pd.Series
+        Sector -> aggregate weight, sorted descending.
+    """
+    sector_map = sp500_df.set_index("Symbol")["GICS Sector"].to_dict()
+    sector_weights: Dict[str, float] = {}
+    for ticker, w in weights.items():
+        sector = sector_map.get(ticker, "Unknown")
+        sector_weights[sector] = sector_weights.get(sector, 0.0) + w
+    return pd.Series(sector_weights).sort_values(ascending=False)
+
+
+def compute_benchmark_sector_weights(sp500_df: pd.DataFrame) -> pd.Series:
+    """
+    Approximate equal-weight sector distribution of the S&P 500 universe.
+    Used for sector deviation analysis. 
+    """
+    counts = sp500_df["GICS Sector"].value_counts()
+    return (counts / counts.sum()).sort_values(ascending=False)
