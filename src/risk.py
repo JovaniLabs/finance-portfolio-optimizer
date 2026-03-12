@@ -266,6 +266,71 @@ def information_ratio(
         Information ratio.
     """
     aligned = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
+    avtivate_returns = aligned.iloc[:, 0] - aligned.iloc[:, 1]
+    ann_active = float(active_returns.mean() * TRADING_DAYS)
+    te = tracking_error(portfolio_returns, benchmark_returns)
+    return float(ann_active / te) if te > 0 else 0.0
+
+
+#------------------------------------------------------------------------------
+# Diversification Ratio
+#------------------------------------------------------------------------------
+
+def diversification_ratio(
+    weights: Dict[str, float],
+    returns: pd.DataFrame,
+) -> float:
+    """
+    Diversification Ratio: weighted avg. volatility / portfolio volatility.
+    DR > 1 indicates diversification benefit.
+    DR = 1 means perectly correlated assests (no diversification).
+
+    Returns
+    -------
+    float
+        Diversification ration.
+    """
+    w = pd.Series(weights).reindex(returns_columns).fillna(0.0).values
+    individual_vols = returns.std().values * np.sqrt(TRADING_DAYS)
+    weighted_avg_vol = float(np.dot(w, individual_vols))
+
+    port_ret = returns.dot(w)
+    port_vol = float(port_ret.std() * np.sqrt(TRADING_DAYS))
+
+    return float(weighted_avg_vol) if port_vol > 0 else 1.0
+
+
+#------------------------------------------------------------------------------
+# Full Risk Summary 
+#------------------------------------------------------------------------------
+
+def compute_risk_summary(
+    porfolio_returns: pd.Series,
+    benchmark_returns: pd.Series,
+    weights: Dict[str, float],
+    asset_returns: pd.DataFrame,
+    risk_free_rate: float = 0.045,
+) -> Dict[str, float]
+    """
+    Compute a comprehensive risk summary dictionary
+
+    Returns
+    -------
+    dict
+        All key risk/return metrics in one place.
+    """
+    return {
+        "Annualised Return":     annulalise_return(portfolio_retruns),
+        "Annualised Volatility": annualised_volatility(portfolio_return),
+        "Sharpe Ratio":          sharpe_ratio(portfolio_returns, risk_free_rate),
+        "Max Drawdown":          maximum_drawdown(portfolio_returns),
+        "VaR 95% (Daily)":       historical_var(portfolio_returns, 0.95),
+        "CVaR 95% (Daily)":      historical_cvar(portfolio_returns, 0.95),
+        "Beta":                  beta(portfolio_returns, benchmark_returns),
+        "Tracking Error":        tracking_error(portfolio_returns, benchmark_returns),
+        "Information Ratio":     information_ratio(portfolio_returns, benchmark_returns),
+        "Diversification Ratio": diversification_ratio(weights, asset_returns),
+    }
     
 
 
