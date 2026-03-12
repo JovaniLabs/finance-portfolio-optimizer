@@ -8,7 +8,7 @@ Insitutional-grade risk analytics:
     - Information Ratio & Tracking Error
     - Diversification Ratio
 
-Author: Jovani Velasco
+Author: Jovani
 """
 
 import logging 
@@ -332,12 +332,3 @@ def compute_risk_summary(
         "Diversification Ratio": diversification_ratio(weights, asset_returns),
     }
     
-
-
-
-
-
-
-
-
-

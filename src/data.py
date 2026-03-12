@@ -4,7 +4,7 @@ data.py
 Handles all data fetching: S&P 500 universe, price history,
 benchmark data, and risk-free rate from FRED.
 
-Author: Jovani Velasco
+Author: Jovani
 """
 
 import logging 
