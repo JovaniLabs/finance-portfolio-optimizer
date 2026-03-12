@@ -7,7 +7,7 @@ Institutioanl Mean-Variance Optimization engine using:
     -Utility Function: maximize w'μ - (λ/2) w'Σw
     -Constraints: long-only, wights caps, min weights
 
-Author: Jovani Velasco
+Author: Jovani
 """
 
 
